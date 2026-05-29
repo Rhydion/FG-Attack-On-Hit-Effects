@@ -96,30 +96,6 @@ local function shouldApplyEffect(isCritEffect, isCrit)
     end
 end
 
-local function getAbilityEffectsBonusCompat(rSource, dcStat)
-    if not rSource or dcStat == "" then
-        return 0, 0
-    end
-
-    if ActorManagerD20 and ActorManagerD20.getAbilityEffectsBonus then
-        return ActorManagerD20.getAbilityEffectsBonus(rSource, dcStat)
-    end
-
-    if ActorCommonManager and ActorCommonManager.getEffectsBonus then
-        return ActorCommonManager.getEffectsBonus(rSource, dcStat)
-    end
-
-    if ActorManager35E and ActorManager35E.getEffectsBonus then
-        return ActorManager35E.getEffectsBonus(rSource, dcStat)
-    end
-
-    if ActorManager35E and ActorManager35E.getAbilityEffectsBonus then
-        return ActorManager35E.getAbilityEffectsBonus(rSource, dcStat)
-    end
-
-    return 0, 0
-end
-
 local function calculateSaveDc(rSource, dcStat, dcMod)
     local saveDc = 10 + dcMod
     if dcStat ~= "" then
@@ -127,7 +103,7 @@ local function calculateSaveDc(rSource, dcStat, dcMod)
         -- Debug.chat(abilityBonus)
         saveDc = saveDc + abilityBonus
         if dcStat ~= "bab" then
-            local abilityEffectBonus = getAbilityEffectsBonusCompat(rSource, dcStat)
+            local abilityEffectBonus = ActorManagerD20.getAbilityEffectsBonus(rSource, dcStat)
             -- Debug.chat(abilityEffectBonus)
             saveDc = saveDc + abilityEffectBonus
         end
@@ -156,11 +132,9 @@ local function getDamageAttackName(rRoll)
         return StringManager.trim(rRoll.sLabel)
     end
 
-    if ActionDamageCore and ActionDamageCore.decodeLabelText then
-        local attackName = ActionDamageCore.decodeLabelText(rRoll.sDesc or "")
-        if attackName ~= "" then
-            return attackName
-        end
+    local attackName = ActionDamageCore.decodeLabelText(rRoll.sDesc or "")
+    if attackName ~= "" then
+        return attackName
     end
 
     return StringManager.trim((rRoll.sDesc or ""):match("%[DAMAGE[^]]*%] ([^[]+)") or "")
@@ -171,9 +145,7 @@ local function addWeaponEffect(rSource, targetNode, weaponEffect)
         return
     end
 
-    if ActorManager and ActorManager.getCTNodeName then
-        weaponEffect.sSource = ActorManager.getCTNodeName(rSource)
-    end
+    weaponEffect.sSource = ActorManager.getCTNodeName(rSource)
 
     EffectManager.addEffect("", nil, targetNode, weaponEffect, true)
 end
@@ -200,7 +172,7 @@ local function applyDamageWeaponEffect(rSource, rTarget, rRoll)
         return
     end
 
-    if ActorManager and ActorManager.isPC and not ActorManager.isPC(rSource) then
+    if not ActorManager.isPC(rSource) then
         return
     end
 
